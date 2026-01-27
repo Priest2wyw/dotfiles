@@ -85,11 +85,12 @@ curl -I --proxy "http://127.0.0.1:${CLASH_MIXED_PORT:-30002}" https://www.exampl
 
 这个 compose 已设置 `restart: unless-stopped`：只要 Docker 服务随开机启动，容器会在重启后自动拉起。
 
-如果你更希望由 systemd 管理（用户服务），可以执行：
+如果你更希望由 systemd 管理（用户服务），仓库内已提供 unit：`~/.config/systemd/user/clash-compose.service`。
+
+执行下面脚本会把该 unit 链接到你的 `~/.config/systemd/user/` 并 `enable --now`：
 
 ```bash
 ./scripts/install-systemd-user-service.sh
-systemctl --user enable --now clash-compose.service
 ```
 
 如果需要在未登录情况下也运行用户服务，可启用 linger：
