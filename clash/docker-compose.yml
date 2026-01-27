@@ -1,0 +1,19 @@
+services:
+  clash:
+    image: ${CLASH_IMAGE:-metacubex/mihomo:latest}
+    container_name: ${CLASH_CONTAINER_NAME:-clash-uv}
+    restart: unless-stopped
+    ports:
+      - "${CLASH_MIXED_PORT:-30002}:7890"
+      - "${CLASH_CTRL_PORT:-30001}:9090"
+    volumes:
+      - ${CLASH_CONFIG_DIR:-~/.config/clash}:/root/.config/mihomo
+    command: ["-f", "/root/.config/mihomo/config.yaml"]
+  yacd:
+    image: ${YACD_IMAGE:-ghcr.io/haishanh/yacd:master}
+    container_name: ${YACD_CONTAINER_NAME:-yacd-uv}
+    restart: unless-stopped
+    ports:
+      - "${YACD_WEB_PORT:-22150}:80"
+    depends_on:
+      - clash
