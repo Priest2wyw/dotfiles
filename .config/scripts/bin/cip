@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage:
+  cip [auto|direct|proxy]
+
+Modes:
+  auto    Use proxy env vars if set, otherwise direct
+  direct  Ignore proxy env vars
+  proxy   Require proxy env vars (HTTP_PROXY/HTTPS_PROXY/ALL_PROXY)
+EOF
+}
+
+MODE="${1:-auto}"
+
+IP_SERVICES=(
+  "https://api.myip.com"
+  "https://ifconfig.me"
+  "https://ipinfo.io/json"
+)
+
+pick_service() {
+  for svc in "${IP_SERVICES[@]}"; do
+    if curl -s --max-time 5 "$svc" >/dev/null; then
+      echo "$svc"
+      return
+    fi
+  done
+  echo ""
+}
+
+proxy_env_set() {
+  [[ -n "${ALL_PROXY:-}" || -n "${HTTPS_PROXY:-}" || -n "${HTTP_PROXY:-}" \
+    || -n "${all_proxy:-}" || -n "${https_proxy:-}" || -n "${http_proxy:-}" ]]
+}
+
+active_proxy() {
+  if [[ -n "${ALL_PROXY:-}" ]]; then echo "ALL_PROXY=$ALL_PROXY"; return; fi
+  if [[ -n "${HTTPS_PROXY:-}" ]]; then echo "HTTPS_PROXY=$HTTPS_PROXY"; return; fi
+  if [[ -n "${HTTP_PROXY:-}" ]]; then echo "HTTP_PROXY=$HTTP_PROXY"; return; fi
+  if [[ -n "${all_proxy:-}" ]]; then echo "all_proxy=$all_proxy"; return; fi
+  if [[ -n "${https_proxy:-}" ]]; then echo "https_proxy=$https_proxy"; return; fi
+  if [[ -n "${http_proxy:-}" ]]; then echo "http_proxy=$http_proxy"; return; fi
+  echo ""
+}
+
+SERVICE="$(pick_service)"
+if [[ -z "$SERVICE" ]]; then
+  echo "ERROR: no IP service reachable" >&2
+  exit 1
+fi
+
+case "$MODE" in
+  -h|--help|help)
+    usage
+    exit 0
+    ;;
+  direct)
+    echo "== CIP =="
+    echo "Mode    : direct"
+    echo "Service : $SERVICE"
+    echo
+    env -u ALL_PROXY -u HTTPS_PROXY -u HTTP_PROXY \
+      -u all_proxy -u https_proxy -u http_proxy \
+      curl -s "$SERVICE"
+    ;;
+  proxy)
+    if ! proxy_env_set; then
+      echo "ERROR: proxy env not set (HTTP_PROXY/HTTPS_PROXY/ALL_PROXY)" >&2
+      exit 1
+    fi
+    echo "== CIP =="
+    echo "Mode    : proxy"
+    echo "Service : $SERVICE"
+    echo "Proxy   : $(active_proxy)"
+    echo
+    curl -s "$SERVICE"
+    ;;
+  auto)
+    echo "== CIP =="
+    echo "Mode    : auto"
+    echo "Service : $SERVICE"
+    if proxy_env_set; then
+      echo "Proxy   : $(active_proxy)"
+      echo
+      curl -s "$SERVICE"
+    else
+      echo "Proxy   : (none)"
+      echo
+      env -u ALL_PROXY -u HTTPS_PROXY -u HTTP_PROXY \
+        -u all_proxy -u https_proxy -u http_proxy \
+        curl -s "$SERVICE"
+    fi
+    ;;
+  *)
+    usage >&2
+    exit 1
+    ;;
+esac
+
+echo
+echo "== Done =="

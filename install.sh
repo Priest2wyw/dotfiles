@@ -50,8 +50,13 @@ link_path "$clash_src" "$clash_dst"
 link_path "$repo_root/.config/systemd/user/clash-compose.service" \
   "$config_home/systemd/user/clash-compose.service"
 
+# scripts
+link_path "$repo_root/.config/scripts" \
+  "$config_home/scripts"
+
 echo
 echo "下一步："
 echo "  1) 编辑 Clash 配置：$config_home/clash/config.yaml"
 echo "  2) 启动：cd $config_home/clash && docker compose up -d"
 echo "  3) 自动启动（systemd 用户服务）：$config_home/clash/scripts/install-systemd-user-service.sh"
+echo "  4) 启用脚本入口：在 ~/.bashrc 加一行：source $config_home/scripts/bootstrap.sh"
