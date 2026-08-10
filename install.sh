@@ -50,6 +50,10 @@ link_path "$clash_src" "$clash_dst"
 link_path "$repo_root/.config/systemd/user/clash-compose.service" \
   "$config_home/systemd/user/clash-compose.service"
 
+# uv
+link_path "$repo_root/.config/uv" \
+  "$config_home/uv"
+
 # scripts
 link_path "$repo_root/.config/scripts" \
   "$config_home/scripts"

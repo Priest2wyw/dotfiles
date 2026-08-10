@@ -1,0 +1,8 @@
+# 服务器通常已经安装 Python，避免 uv 动不动下载 Python
+python-preference = "system"
+python-downloads = "manual"
+
+# 国内 PyPI 镜像
+[[index]]
+url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/"
+default = true
