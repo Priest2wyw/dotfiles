@@ -43,6 +43,33 @@ normalize_cache_dir() {
   esac
 }
 
+select_uv_index() {
+  local choice
+
+  echo "请选择 uv 拉取软件源：" >&2
+  echo "  1) PyPI 官方源" >&2
+  echo "  2) 清华大学源（默认）" >&2
+  echo "  3) 中国科学技术大学源" >&2
+  echo "  4) 阿里云源" >&2
+  echo "  5) 腾讯云源" >&2
+  echo "  6) 华为云源" >&2
+  printf '%s' "请输入 1-6，直接回车选择清华源：" >&2
+  IFS= read -r choice || choice=""
+
+  case "${choice:-2}" in
+    1) printf '%s|%s\n' "PyPI 官方源" "https://pypi.org/simple" ;;
+    2) printf '%s|%s\n' "清华大学源" "https://pypi.tuna.tsinghua.edu.cn/simple" ;;
+    3) printf '%s|%s\n' "中国科学技术大学源" "https://mirrors.ustc.edu.cn/pypi/simple" ;;
+    4) printf '%s|%s\n' "阿里云源" "https://mirrors.aliyun.com/pypi/simple" ;;
+    5) printf '%s|%s\n' "腾讯云源" "https://mirrors.cloud.tencent.com/pypi/simple" ;;
+    6) printf '%s|%s\n' "华为云源" "https://repo.huaweicloud.com/repository/pypi/simple" ;;
+    *)
+      echo "错误：请输入 1-6。" >&2
+      return 1
+      ;;
+  esac
+}
+
 python_cmd="$(find_python)"
 
 echo "使用 $python_cmd 进行用户级 uv 安装..."
@@ -50,11 +77,22 @@ echo "使用 $python_cmd 进行用户级 uv 安装..."
 
 uv_cmd="$(find_uv)"
 echo "安装完成：$("$uv_cmd" --version)"
+
+scripts_home="${XDG_CONFIG_HOME:-$HOME/.config}/scripts"
+index_env="$scripts_home/env.d/uv-index.local.sh"
+index_details="$(select_uv_index)"
+index_name="${index_details%%|*}"
+index_url="${index_details#*|}"
+mkdir -p -- "$(dirname -- "$index_env")"
+printf 'export UV_DEFAULT_INDEX=%q\n' "$index_url" >"$index_env"
+export UV_DEFAULT_INDEX="$index_url"
+echo "已设置用户级 uv 拉取源：$index_name"
+echo "default-index：$UV_DEFAULT_INDEX"
+
 echo "uv 默认缓存目录：$("$uv_cmd" cache dir)"
 printf '%s' "自定义缓存目录（直接回车保留 uv 默认值）："
 IFS= read -r cache_input || cache_input=""
 
-scripts_home="${XDG_CONFIG_HOME:-$HOME/.config}/scripts"
 cache_env="$scripts_home/env.d/uv-cache.local.sh"
 
 if [[ -z "$cache_input" ]]; then
@@ -63,6 +101,7 @@ if [[ -z "$cache_input" ]]; then
     echo "已移除旧的自定义缓存设置。"
   fi
   echo "继续使用 uv 默认缓存目录：$("$uv_cmd" cache dir)"
+  echo "新终端会自动加载 uv 拉取源；当前终端可执行：source ~/.config/scripts/bootstrap.sh"
   exit 0
 fi
 
@@ -72,4 +111,4 @@ printf 'export UV_CACHE_DIR=%q\n' "$cache_dir" >"$cache_env"
 
 export UV_CACHE_DIR="$cache_dir"
 echo "已设置 uv 缓存目录：$("$uv_cmd" cache dir)"
-echo "新终端会自动生效；当前终端可执行：source $cache_env"
+echo "新终端会自动生效；当前终端可执行：source ~/.config/scripts/bootstrap.sh"

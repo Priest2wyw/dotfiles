@@ -34,7 +34,7 @@ chmod +x ~/.config/scripts/bin/xxx
 - `ccd`: run `claude --dangerously-skip-permissions`
 - `pip_canel`: interactively select a pip package index
 - `pip_channel`: correctly-spelled alias of `pip_canel`
-- `uv_init`: install or upgrade uv with pip at user level, then optionally set its cache path
+- `uv_init`: install or upgrade uv with pip at user level, then select its package index and cache path
 - `init_uv`: compatibility alias of `uv_init`
 
 Both `cxd` and `ccd` disable normal safety checks. Use them only in a trusted
