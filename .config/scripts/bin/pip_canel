@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage:
+  pip_canel [official|tsinghua|ustc|aliyun|tencent|huawei]
+  pip_canel --show
+
+Run without arguments to select a pip package index interactively.
+EOF
+}
+
+find_python() {
+  local candidate
+
+  for candidate in python3 python; do
+    if command -v "$candidate" >/dev/null 2>&1 \
+      && "$candidate" -m pip --version >/dev/null 2>&1; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+
+  echo "错误：未找到可用的 Python pip（尝试过 python3 和 python）。" >&2
+  return 1
+}
+
+source_details() {
+  case "$1" in
+    official) printf '%s|%s\n' "PyPI 官方源" "https://pypi.org/simple" ;;
+    tsinghua) printf '%s|%s\n' "清华大学源" "https://pypi.tuna.tsinghua.edu.cn/simple" ;;
+    ustc) printf '%s|%s\n' "中国科学技术大学源" "https://mirrors.ustc.edu.cn/pypi/simple" ;;
+    aliyun) printf '%s|%s\n' "阿里云源" "https://mirrors.aliyun.com/pypi/simple" ;;
+    tencent) printf '%s|%s\n' "腾讯云源" "https://mirrors.cloud.tencent.com/pypi/simple" ;;
+    huawei) printf '%s|%s\n' "华为云源" "https://repo.huaweicloud.com/repository/pypi/simple" ;;
+    *) return 1 ;;
+  esac
+}
+
+select_source() {
+  local choice
+
+  echo "请选择 pip 软件源：" >&2
+  select choice in \
+    "PyPI 官方源" \
+    "清华大学源" \
+    "中国科学技术大学源" \
+    "阿里云源" \
+    "腾讯云源" \
+    "华为云源" \
+    "取消"; do
+    case "$REPLY" in
+      1) printf '%s\n' official; return ;;
+      2) printf '%s\n' tsinghua; return ;;
+      3) printf '%s\n' ustc; return ;;
+      4) printf '%s\n' aliyun; return ;;
+      5) printf '%s\n' tencent; return ;;
+      6) printf '%s\n' huawei; return ;;
+      7) echo "已取消。" >&2; return 1 ;;
+      *) echo "请输入 1-7。" >&2 ;;
+    esac
+  done
+}
+
+python_cmd="$(find_python)"
+
+case "${1:-}" in
+  -h|--help|help)
+    usage
+    exit 0
+    ;;
+  --show)
+    "$python_cmd" -m pip config --user get global.index-url 2>/dev/null \
+      || echo "尚未在 pip 用户配置中设置软件源。"
+    exit 0
+    ;;
+  "")
+    source_key="$(select_source)" || exit 0
+    ;;
+  *)
+    source_key="$1"
+    ;;
+esac
+
+if ! details="$(source_details "$source_key")"; then
+  echo "错误：未知软件源 '$source_key'。" >&2
+  usage >&2
+  exit 2
+fi
+
+source_name="${details%%|*}"
+source_url="${details#*|}"
+
+"$python_cmd" -m pip config --user set global.index-url "$source_url"
+
+echo "已切换到：$source_name"
+echo "index-url：$source_url"
+if [[ -n "${PIP_INDEX_URL:-}" ]]; then
+  echo "提示：当前环境变量 PIP_INDEX_URL 会优先于上述用户配置。"
+fi

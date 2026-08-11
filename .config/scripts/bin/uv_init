@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+find_python() {
+  local candidate
+
+  for candidate in python3 python; do
+    if command -v "$candidate" >/dev/null 2>&1 \
+      && "$candidate" -m pip --version >/dev/null 2>&1; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+
+  echo "错误：未找到可用的 Python pip（尝试过 python3 和 python）。" >&2
+  return 1
+}
+
+find_uv() {
+  local user_base
+
+  if command -v uv >/dev/null 2>&1; then
+    command -v uv
+    return
+  fi
+
+  user_base="$("$python_cmd" -m site --user-base)"
+  if [[ -x "$user_base/bin/uv" ]]; then
+    printf '%s\n' "$user_base/bin/uv"
+    return
+  fi
+
+  echo "错误：pip 已完成，但找不到 uv 可执行文件。" >&2
+  return 1
+}
+
+normalize_cache_dir() {
+  case "$1" in
+    "~") printf '%s\n' "$HOME" ;;
+    "~/"*) printf '%s/%s\n' "$HOME" "${1:2}" ;;
+    /*) printf '%s\n' "$1" ;;
+    *) printf '%s/%s\n' "$PWD" "$1" ;;
+  esac
+}
+
+python_cmd="$(find_python)"
+
+echo "使用 $python_cmd 进行用户级 uv 安装..."
+"$python_cmd" -m pip install --user --upgrade uv
+
+uv_cmd="$(find_uv)"
+echo "安装完成：$("$uv_cmd" --version)"
+echo "uv 默认缓存目录：$("$uv_cmd" cache dir)"
+printf '%s' "自定义缓存目录（直接回车保留 uv 默认值）："
+IFS= read -r cache_input || cache_input=""
+
+scripts_home="${XDG_CONFIG_HOME:-$HOME/.config}/scripts"
+cache_env="$scripts_home/env.d/uv-cache.local.sh"
+
+if [[ -z "$cache_input" ]]; then
+  if [[ -f "$cache_env" ]]; then
+    rm -f -- "$cache_env"
+    echo "已移除旧的自定义缓存设置。"
+  fi
+  echo "继续使用 uv 默认缓存目录：$("$uv_cmd" cache dir)"
+  exit 0
+fi
+
+cache_dir="$(normalize_cache_dir "$cache_input")"
+mkdir -p -- "$cache_dir" "$(dirname -- "$cache_env")"
+printf 'export UV_CACHE_DIR=%q\n' "$cache_dir" >"$cache_env"
+
+export UV_CACHE_DIR="$cache_dir"
+echo "已设置 uv 缓存目录：$("$uv_cmd" cache dir)"
+echo "新终端会自动生效；当前终端可执行：source $cache_env"

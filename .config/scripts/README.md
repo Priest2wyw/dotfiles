@@ -28,6 +28,18 @@ source ~/.config/scripts/bootstrap.sh
 chmod +x ~/.config/scripts/bin/xxx
 ```
 
+## Included commands
+
+- `cxd`: run `codex --yolo`
+- `ccd`: run `claude --dangerously-skip-permissions`
+- `pip_canel`: interactively select a pip package index
+- `pip_channel`: correctly-spelled alias of `pip_canel`
+- `uv_init`: install or upgrade uv with pip at user level, then optionally set its cache path
+- `init_uv`: compatibility alias of `uv_init`
+
+Both `cxd` and `ccd` disable normal safety checks. Use them only in a trusted
+working directory. Run `pip_canel --help` to see non-interactive source names.
+
 ## Design
 
 - `bootstrap.sh` adds `bin/` to `PATH` and sources `env.d/`, `aliases.d/`, `completions.d/`
