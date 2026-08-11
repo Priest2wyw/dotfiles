@@ -1,2 +1,4 @@
 *
 !.gitignore
+!*.sh
+*.local.sh

@@ -30,6 +30,9 @@ chmod +x ~/.config/scripts/bin/xxx
 
 ## Included commands
 
+- Common shell helpers: colored `ls`/`grep`, `l`, `..`, `...`, `....`, `cls`, `mkcd`, and `croot`
+- Git shortcuts: `g`, `gs`, `gd`, and `gl`
+- Bash defaults: append-only history, terminal-size checks, and system completion loading
 - `cxd`: run `codex --yolo`
 - `ccd`: run `claude --dangerously-skip-permissions`
 - `pip_canel`: interactively select a pip package index

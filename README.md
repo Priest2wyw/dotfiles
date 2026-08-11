@@ -39,6 +39,8 @@ source ~/.config/scripts/bootstrap.sh
 
 当前内置命令：
 
+- 通用 Shell：彩色 `ls/grep`、`l`、`..`、`...`、`....`、`cls`、`mkcd`、`croot`
+- Git 快捷入口：`g`、`gs`、`gd`、`gl`
 - `cxd`：运行 `codex --yolo`
 - `ccd`：运行 `claude --dangerously-skip-permissions`
 - `pip_canel`：交互选择 pip 软件源（也可使用兼容入口 `pip_channel`）
